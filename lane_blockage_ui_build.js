@@ -6,7 +6,8 @@
  * To change this template use File | Settings | File Templates.
  */
 
-// laneblockage ui design
+//  laneblockage ui design
+// 多路段選取UI
 $.prototype.build_lane_blockage_ui=function(){
     var target=$(this).css({
         position:'relative',
@@ -17,17 +18,40 @@ $.prototype.build_lane_blockage_ui=function(){
 
     // 選取
     main_ui.mousedown(function(e){
-        this.pos=[undefined,undefined];
-        (e.target==this) ? this.pos[0] = e.offsetX : undefined;
-        main_ui.mousemove(function(e){
-            this.pos[1] = e.offsetX;
-        });
-    }).mouseup(function(e){
-        main_ui.unbind('mousemove');
-        //選取完成
-        console.log(this.pos);
-        var span=$('<span></span>').css({position:'absolute',left: this.pos[0],display:'inline-block',backgroundColor:'green',height:this.style.height,width: Math.abs(this.pos[1]-this.pos[0]) });
-        span.appendTo(this)
+        this.pos=[undefined,undefined]; // init
+
+        if(e.target==this){ //必須在指定元素下壓才會觸發
+            this.pos[0] = e.offsetX;    // 畫鼠下壓
+
+            console.log(this.pos);
+
+            main_ui.mouseup(function(e){    //滑鼠放開
+                if(e.target==this){
+
+                    this.pos[1] = e.offsetX;
+
+                    console.log(this.pos);
+
+                    if( Math.abs(this.pos[1]-this.pos[0])>0 ){
+
+                        var span=$('<span></span>').css({position:'absolute',left: this.pos[0] > this.pos[1] ? this.pos[1] : this.pos[0],display:'inline-block',backgroundColor:'green',height:this.style.height,width: Math.abs(this.pos[1]-this.pos[0]) });
+
+                        span.appendTo(this);
+
+                        span.dblclick(function(e){
+                            this.remove();
+                        })
+
+                        span.click(function(e){
+                            console.log(this.style.left,this.style.width);
+                        })
+
+                    }
+                };
+
+                main_ui.unbind('mousemove mouseup');
+            });
+        }
     });
 
     main_ui.appendTo(target);
