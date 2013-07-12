@@ -7,36 +7,51 @@
  */
 //  laneblockage ui design
 
-// 多路段選取UI
+// 多路段選取UI,需要輸入比例尺
 $.prototype.build_lane_blockage_ui=function(km_length){
+
+    // 重新計算座標
+    var re_calculate_offset=function(e,_this){
+        if(e.target!=_this){ return parseInt(e.target.style.left)+parseInt(e.offsetX); }
+        else{ return parseInt(e.offsetX); }
+    };
+
+    // 比例尺換算
+    var calculate_length=function(pos_x){
+        var width=parseInt( $('div.lane_blockage').css('width') );
+        return Math.round( (pos_x/width)*km_length*10 )/10
+    };
+
     var target=$(this).css({
         position:'relative',
         cursor:'pointer',
         borderRadius:10
     }).empty();
 
-    var main_ui=$('<div style="width: 100%;background-color: darkgrey;display:inline-block;margin-bottom:30px;height:40px;" onDragStart="return false" onSelectStart="return false"></div>');
+    var main_ui=$('<div style="border-top:5px ridge darkgrey;border-bottom:5px ridge darkgrey;width: 100%;background-color: lightgrey;display:inline-block;margin-bottom:20px;height:40px;" onDragStart="return false" onSelectStart="return false"></div>');
 
     // 選取
     main_ui.mousedown(function(e){
         this.pos=[undefined,undefined]; // init
 
         //座標換算
-        if(e.target!=this){this.pos[0]=parseInt(e.target.style.left)+parseInt(e.offsetX);}
-        else{this.pos[0]=parseInt(e.offsetX);}
+        this.pos[0]=re_calculate_offset(e,this);
 
         main_ui.mouseup(function(e){    //滑鼠放開
 
                 //座標換算
-                if(e.target!=this){this.pos[1]=parseInt(e.target.style.left)+parseInt(e.offsetX);}
-                else{this.pos[1]=parseInt(e.offsetX);}
+                this.pos[1]=re_calculate_offset(e,this);
 
                 if( Math.abs(this.pos[1]-this.pos[0])>0 ){
 
-                    var span=$('<span></span>')
+                    var time=new Date;
+                    var class_name='range_'+time.getTime();
+                    var span=$('<span></span>').attr({class:class_name,id:class_name});
 
                     span.dblclick(function(e){
                         this.remove();
+                        infobox.find('.'+this.className).remove();
+                        aa=infobox;
                     });
 
                     span.click(function(e){
@@ -44,23 +59,38 @@ $.prototype.build_lane_blockage_ui=function(km_length){
                     });
 
                     span.css({
-                        borderRadius:5,
                         opacity: .7,
                         position:'absolute',
                         left: this.pos[0] > this.pos[1] ? this.pos[1] : this.pos[0],
                         display:'inline-block',
                         backgroundColor:'yellow',
-                        height:parseInt(this.style.height)-6,
+                        height:parseInt(this.style.height),
                         width: Math.abs(this.pos[1]-this.pos[0]),
-                        border:'3px solid blue'
+                        borderRight:'3px solid blue',
+                        borderLeft:'3px solid blue'
                     });
 
                     span.hover(function(e){
-                        this.style.border='3px solid orangered';
+                        this.style.borderLeft='3px solid orangered';
+                        this.style.borderRight='3px solid orangered';
                     },function(e){
-                        this.style.border='3px solid blue';
-                    })
+                        this.style.borderLeft='3px solid blue';
+                        this.style.borderRight='3px solid blue';
+                    });
+
                     span.appendTo(this);
+                    var infobox_item=$('<span></span>').css({paddingLeft:10}).attr({class:class_name});
+
+                    var begin=parseInt(span.css('left'));
+                    var end=parseInt(span.css('left'))+parseInt(span.css('width'));
+
+                    infobox_item.html(
+                        calculate_length(begin)+'~'+calculate_length(end)+' 公里'
+                    );
+
+                    infobox_item.appendTo(infobox);
+
+
                 }
             main_ui.unbind('mouseup');
         });
@@ -69,14 +99,14 @@ $.prototype.build_lane_blockage_ui=function(km_length){
     main_ui.appendTo(target);
 
     main_ui.mousemove(function(e){
-        if(e.target!=this){var x=parseInt(e.target.style.left)+parseInt(e.offsetX);}
-        else{var x=parseInt(e.offsetX);}
+
+        //座標換算
+        var x=re_calculate_offset(e,this);
+
         showInfo.css('left',x);
         showInfo.show();
 
-        var width=parseInt( $('div.lane_blockage').css('width') );
-
-        showInfo.text( Math.round( (x/width)*km_length*10 )/10+' 公里' );
+        showInfo.text( calculate_length(x)+' 公里' );
     });
 
     main_ui.mouseleave(function(e){
@@ -87,11 +117,19 @@ $.prototype.build_lane_blockage_ui=function(km_length){
         position:'absolute',
         fontWeight:'bold',
         color:'blue',
-        top:40,
+        top:50,
         display:'none'
     });
 
+    // 用來紀錄到底有多少選擇
     showInfo.appendTo(main_ui);
+
+    var infobox=$('<div></div>').css({
+        width:'100%'
+    });
+
+    infobox.insertAfter(target);
+
 
     return target
 };
