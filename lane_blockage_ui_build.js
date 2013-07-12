@@ -15,7 +15,7 @@ $.prototype.build_lane_blockage_ui=function(km_length){
         borderRadius:10
     }).empty();
 
-    var main_ui=$('<div style="width: 100%;background-color: darkgrey;display:inline-block;margin-bottom:30px;height:40px;"></div>');
+    var main_ui=$('<div style="width: 100%;background-color: darkgrey;display:inline-block;margin-bottom:30px;height:40px;" onDragStart="return false" onSelectStart="return false"></div>');
 
     // 選取
     main_ui.mousedown(function(e){
@@ -73,8 +73,6 @@ $.prototype.build_lane_blockage_ui=function(km_length){
         else{var x=parseInt(e.offsetX);}
         showInfo.css('left',x);
         showInfo.show();
-
-        a=this;
 
         var width=parseInt( $('div.lane_blockage').css('width') );
 
