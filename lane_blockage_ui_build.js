@@ -104,7 +104,14 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 				if(!check){
 					var begin=parseInt(span.css('left'));
 					var end=parseInt(span.css('left'))+parseInt(span.css('width'));
-					span.attr('title',calculate_length(begin)+'~'+calculate_length(end)+' 公里');
+					span.attr({
+						title:calculate_length(begin)+'~'+calculate_length(end)+' 公里',
+						begin_at:calculate_length(begin),
+						end_at:calculate_length(end),
+						begin_time_at:'',
+						end_time_at:'',
+						duration_time:0
+					});
 					span.appendTo(this);
 				};
 
