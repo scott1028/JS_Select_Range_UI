@@ -7,8 +7,17 @@
  */
 //  laneblockage ui design
 
-// 多路段選取UI,需要輸入比例尺
-$.prototype.build_lane_blockage_ui=function(km_length){
+// 多路段選取UI,需要輸入比例尺, function( 比例尺長度、依照比例尺計算後預設排除的路段 )
+$.prototype.build_lane_blockage_ui=function(km_length,user_block){
+	// 初始化標的
+	var target=$(this).css({
+		position:'relative',
+		cursor:'pointer',
+		borderRadius:10
+	}).empty();
+
+	// 使用者自訂遮蔽陣列
+	var user_block=user_block || [];
 
 	// 檢查陣列是否相等
 	Array.prototype.array_include_only_total_length_is_2=function(another_array){
@@ -19,12 +28,6 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 		};
 		return false;
 	};
-
-	var target=$(this).css({
-		position:'relative',
-		cursor:'pointer',
-		borderRadius:10
-	}).empty();
 
 	// 選擇結果
 	target.current_selected_range=[];
@@ -44,14 +47,56 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 		return Math.round( (pos_x/width)*km_length*10 )/10
 	};
 
+	// 重新計算飯為
 	var re_caculate_array=function(){
-		// 重新計算飯為
 		target.current_selected_range=[]; //清除
 		var _select_ranges=target.find('span[id^=range_]');
 		for(var i=0;i<_select_ranges.length;i++){
 			target.current_selected_range.push( [ calculate_length(parseInt(_select_ranges[i].style.left)) , calculate_length(parseInt(_select_ranges[i].style.left)+parseInt(_select_ranges[i].style.width)) ] );
 		}
 	};
+
+	// 計算覆蓋程度
+	var calculate_recover=function(new_array){
+		var result=false;
+		var r=target.current_selected_range;
+		for(var i=0;i<r.length;i++){
+			
+			// 某一點介於
+			if( (r[i][0]<=new_array[0]) && (new_array[0]<=r[i][1]) || (r[i][0]<=new_array[1]) && (new_array[1]<=r[i][1]) ){
+				return true;
+			};
+
+			// 兩點橫跨
+			if( (new_array[0]<=r[i][0]) && new_array[1]>=r[i][1] ){
+				return true;
+			};
+		}
+
+		return result;
+	};
+
+	// 計算覆蓋程度(使用者定義)
+	var calculate_recover_by_user=function(new_array){
+
+		var result=false;
+
+		var r=user_block;
+		for(var i=0;i<r.length;i++){
+
+			// 某一點介於
+			if( (r[i][0]<=new_array[0]) && (new_array[0]<=r[i][1]) || (r[i][0]<=new_array[1]) && (new_array[1]<=r[i][1]) ){
+				return true;
+			};
+
+			// 兩點橫跨
+			if( (new_array[0]<=r[i][0]) && new_array[1]>=r[i][1] ){
+				return true;
+			};
+		}
+
+		return result;
+	}
 
 	var main_ui=$('<div style="border-top:5px ridge darkgrey;border-bottom:5px ridge darkgrey;width: 100%;background-color: lightgrey;display:inline-block;margin-bottom:20px;height:40px;" onDragStart="return false" onSelectStart="return false"></div>');
 
@@ -98,10 +143,17 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 
 				var this_position=[ calculate_length(parseInt( span.css('left') )) , calculate_length(parseInt( span.css('left') )+parseInt( span.css('width') )) ];
 
+				// 檢查這次拖曳的數據可否使用：
+				//
 				// 檢查是不是重複的
-				var check=target.current_selected_range.array_include_only_total_length_is_2(this_position);
+				var check_1=target.current_selected_range.array_include_only_total_length_is_2(this_position);
+				// 檢查覆蓋
+				var check_2=calculate_recover(this_position);
+				// 檢查使用者定義覆蓋
+				var check_3=calculate_recover_by_user(this_position);
 
-				if(!check){
+				// 全數通過才可以畫圖
+				if( (!check_1) && (!check_2) && (!check_3) ){ 
 					var begin=parseInt(span.css('left'));
 					var end=parseInt(span.css('left'))+parseInt(span.css('width'));
 					span.attr({
@@ -153,5 +205,5 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 
 // init ui
 $(document).ready(function(){
-	a=$('.lane_blockage').build_lane_blockage_ui(50);		// 設定比例尺 50 KM
+	a=$('.lane_blockage').build_lane_blockage_ui( 50 , [ [10,15] , [30,35] ] );		// 設定比例尺 50 KM
 });
