@@ -8,7 +8,7 @@
 //  laneblockage ui design
 
 // 多路段選取UI,需要輸入比例尺, function( 比例尺長度、依照比例尺計算後預設排除的路段 )
-$.prototype.build_lane_blockage_ui=function(km_length,user_block){
+$.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_handle){
 	// 初始化標的
 	var target=$(this).css({
 		position:'relative',
@@ -123,6 +123,8 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block){
 					re_caculate_array();
 				});
 
+				block_click_handle ? span.click(block_click_handle) : undefined;
+
 				span.css({
 					opacity: .6,
 					position:'absolute',
@@ -194,6 +196,7 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block){
 		fontWeight:'bold',
 		color:'red',
 		top:50,
+		minWidth:80,
 		display:'none'
 	});
 
@@ -205,5 +208,5 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block){
 
 // init ui
 $(document).ready(function(){
-	a=$('.lane_blockage').build_lane_blockage_ui( 50 , [ [10,15] , [30,35] ] );		// 設定比例尺 50 KM
+	a=$('.lane_blockage').build_lane_blockage_ui( 50 , [ [10,15] , [30,35] ] , function(e){console.log(this)} );		// 設定比例尺 50 KM
 });
