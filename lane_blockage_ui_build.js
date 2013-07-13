@@ -83,7 +83,7 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 					position:'absolute',
 					left: this.pos[0] > this.pos[1] ? this.pos[1] : this.pos[0],
 					display:'inline-block',
-					backgroundColor:'yellow',
+					backgroundColor:'lightblue',
 					height:parseInt(this.style.height),
 					width: Math.abs(this.pos[1]-this.pos[0]),
 					borderRight:'3px solid blue',
@@ -101,15 +101,12 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 				// 檢查是不是重複的
 				var check=target.current_selected_range.array_include_only_total_length_is_2(this_position);
 
-				if(!check)
+				if(!check){
+					var begin=parseInt(span.css('left'));
+					var end=parseInt(span.css('left'))+parseInt(span.css('width'));
+					span.attr('title',calculate_length(begin)+'~'+calculate_length(end)+' 公里');
 					span.appendTo(this);
-
-				var infobox_item=$('<span></span>').css({paddingLeft:10}).attr({class:class_name});
-
-				var begin=parseInt(span.css('left'));
-				var end=parseInt(span.css('left'))+parseInt(span.css('width'));
-
-				infobox_item.html(calculate_length(begin)+'~'+calculate_length(end)+' 公里');
+				};
 
 				re_caculate_array();
 			};
@@ -136,7 +133,7 @@ $.prototype.build_lane_blockage_ui=function(km_length){
 	var showInfo=$('<span>0km</span>').css({
 		position:'absolute',
 		fontWeight:'bold',
-		color:'blue',
+		color:'red',
 		top:50,
 		display:'none'
 	});
