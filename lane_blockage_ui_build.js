@@ -8,7 +8,8 @@
 //  laneblockage ui design
 
 // 多路段選取UI,需要輸入比例尺, function( 比例尺長度、依照比例尺計算後預設排除的路段 )
-$.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_handle){
+$.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_handle,flag){
+
 	// 初始化標的
 	var target=$(this).css({
 		position:'relative',
@@ -29,8 +30,22 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 		return false;
 	};
 
-	// 選擇結果
-	target.current_selected_range=[];
+	// API：選擇結果
+	target.get_current_selected_range=[];
+
+	// API：利用數值來建立
+	target.set_create_section_range=function(x,y){
+		var _this=$('div.lane_blockage div');
+
+		var _x=Math.round(x*parseInt(_this.css('width'))/km_length);
+		var _y=Math.round(y*parseInt(_this.css('width'))/km_length);
+
+		var x=Math.min(_x,_y);
+		var y=Math.max(_x,_y);
+
+		_this[0].pos=[x,y];
+		build_section_range.call(_this[0]);
+	};
 
 	// 比例尺
 	var km_length=km_length || parseInt($(this).css('width')); 
@@ -41,7 +56,7 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 		else{ return parseInt(e.offsetX); }
 	};
 
-	// 比例尺換算
+	// 比例尺換算( pos to km )
 	var calculate_length=function(pos_x){
 		var width=parseInt( $('div.lane_blockage').css('width') );
 		return Math.round( (pos_x/width)*km_length*10 )/10
@@ -49,17 +64,17 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 
 	// 重新計算飯為
 	var re_caculate_array=function(){
-		target.current_selected_range=[]; //清除
+		target.get_current_selected_range=[]; //清除
 		var _select_ranges=target.find('span[id^=range_]');
 		for(var i=0;i<_select_ranges.length;i++){
-			target.current_selected_range.push( [ calculate_length(parseInt(_select_ranges[i].style.left)) , calculate_length(parseInt(_select_ranges[i].style.left)+parseInt(_select_ranges[i].style.width)) ] );
+			target.get_current_selected_range.push( [ calculate_length(parseInt(_select_ranges[i].style.left)) , calculate_length(parseInt(_select_ranges[i].style.left)+parseInt(_select_ranges[i].style.width)) ] );
 		}
 	};
 
 	// 計算覆蓋程度
 	var calculate_recover=function(new_array){
 		var result=false;
-		var r=target.current_selected_range;
+		var r=target.get_current_selected_range;
 		for(var i=0;i<r.length;i++){
 			
 			// 某一點介於
@@ -98,6 +113,76 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 		return result;
 	}
 
+	// 建立元件
+	var build_section_range=function(){
+		if( Math.abs(this.pos[1]-this.pos[0])>0 ){
+
+			var time=new Date;
+			var class_name='range_'+time.getTime();
+			var span=$('<span></span>').attr({class:class_name,id:class_name});
+
+			span.dblclick(function(e){
+				this.remove();
+				re_caculate_array();
+			});
+
+			block_click_handle ? span.click(block_click_handle) : undefined;
+
+			span.css({
+				opacity: .6,
+				position:'absolute',
+				left: this.pos[0] > this.pos[1] ? this.pos[1] : this.pos[0],
+				display:'inline-block',
+				backgroundColor:'lightblue',
+				height:parseInt(this.style.height),
+				width: Math.abs(this.pos[1]-this.pos[0]),
+				borderRight:'3px solid blue',
+				borderLeft:'3px solid blue'
+			});
+
+			span.hover(function(e){
+				$(this).css({backgroundColor:'green'});
+			},function(e){
+				$(this).css({backgroundColor:'lightblue'});
+			});
+
+			var this_position=[ calculate_length(parseInt( span.css('left') )) , calculate_length(parseInt( span.css('left') )+parseInt( span.css('width') )) ];
+
+			// 檢查這次拖曳的數據可否使用：
+			var check_result=(function(){
+				// 可以強制設定成 false 讓三個都不檢查
+				if(flag){
+					var check_1=false;// 檢查是不是重複的
+					var check_2=false;// 檢查覆蓋
+					var check_3=false;// 檢查使用者定義覆蓋
+				}
+				else{
+					var check_1=target.get_current_selected_range.array_include_only_total_length_is_2(this_position);
+					var check_2=calculate_recover(this_position);
+					var check_3=calculate_recover_by_user(this_position);
+				};
+				return (!check_1) && (!check_2) && (!check_3);
+			}());
+
+			// 全數通過才可以畫圖
+			if( check_result ){ 
+				var begin=parseInt(span.css('left'));
+				var end=parseInt(span.css('left'))+parseInt(span.css('width'));
+				span.attr({
+					title:calculate_length(begin)+'~'+calculate_length(end)+' 公里',
+					begin_at:calculate_length(begin),
+					end_at:calculate_length(end),
+					begin_time_at:'',
+					end_time_at:'',
+					duration_time:0
+				});
+				span.appendTo(this);
+			};
+
+			re_caculate_array();
+		};
+	};
+
 	var main_ui=$('<div style="border-top:5px ridge darkgrey;border-bottom:5px ridge darkgrey;width: 100%;background-color: lightgrey;display:inline-block;margin-bottom:20px;height:40px;" onDragStart="return false" onSelectStart="return false"></div>');
 
 	// 選取
@@ -112,65 +197,8 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 			//座標換算
 			this.pos[1]=re_calculate_offset(e,this);
 
-			if( Math.abs(this.pos[1]-this.pos[0])>0 ){
-
-				var time=new Date;
-				var class_name='range_'+time.getTime();
-				var span=$('<span></span>').attr({class:class_name,id:class_name});
-
-				span.dblclick(function(e){
-					this.remove();
-					re_caculate_array();
-				});
-
-				block_click_handle ? span.click(block_click_handle) : undefined;
-
-				span.css({
-					opacity: .6,
-					position:'absolute',
-					left: this.pos[0] > this.pos[1] ? this.pos[1] : this.pos[0],
-					display:'inline-block',
-					backgroundColor:'lightblue',
-					height:parseInt(this.style.height),
-					width: Math.abs(this.pos[1]-this.pos[0]),
-					borderRight:'3px solid blue',
-					borderLeft:'3px solid blue'
-				});
-
-				span.hover(function(e){
-					$(this).css({backgroundColor:'green'});
-				},function(e){
-					$(this).css({backgroundColor:'lightblue'});
-				});
-
-				var this_position=[ calculate_length(parseInt( span.css('left') )) , calculate_length(parseInt( span.css('left') )+parseInt( span.css('width') )) ];
-
-				// 檢查這次拖曳的數據可否使用：
-				//
-				// 檢查是不是重複的
-				var check_1=target.current_selected_range.array_include_only_total_length_is_2(this_position);
-				// 檢查覆蓋
-				var check_2=calculate_recover(this_position);
-				// 檢查使用者定義覆蓋
-				var check_3=calculate_recover_by_user(this_position);
-
-				// 全數通過才可以畫圖
-				if( (!check_1) && (!check_2) && (!check_3) ){ 
-					var begin=parseInt(span.css('left'));
-					var end=parseInt(span.css('left'))+parseInt(span.css('width'));
-					span.attr({
-						title:calculate_length(begin)+'~'+calculate_length(end)+' 公里',
-						begin_at:calculate_length(begin),
-						end_at:calculate_length(end),
-						begin_time_at:'',
-						end_time_at:'',
-						duration_time:0
-					});
-					span.appendTo(this);
-				};
-
-				re_caculate_array();
-			};
+			// 建立
+			build_section_range.call(this);
 
 			main_ui.unbind('mouseup');
 		});
@@ -183,7 +211,7 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 		//座標換算
 		var x=re_calculate_offset(e,this);
 
-		showInfo.css('left',x);
+		showInfo.css('left',x-25);
 		showInfo.show();
 
 		showInfo.text( calculate_length(x)+' 公里' );
@@ -208,5 +236,6 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 
 // init ui
 $(document).ready(function(){
-	a=$('.lane_blockage').build_lane_blockage_ui( 50 , [ [10,15] , [30,35] ] , function(e){console.log(this)} );		// 設定比例尺 50 KM
+	//a=$('.lane_blockage').build_lane_blockage_ui( 50 , [ [10,15] , [30,35] ] , function(e){console.log(this)} );		// 設定比例尺 50 KM
+	a=$('.lane_blockage').build_lane_blockage_ui( 50 , [] , function(e){console.log(this)} , true );					// 設定比例尺 50 KM
 });

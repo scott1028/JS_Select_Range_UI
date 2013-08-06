@@ -8,10 +8,78 @@
 <body>
 
 <div class="lane_blockage"></div>
+<!--div class="road"></div-->
+
+<!--div style="display:block;width:100%;height:50px;background-color:green;position:relative;">
+	<div style="position:absolute;left:200px;height:100%;background-color:blue;display:block;width:200px;"></div>
+</div-->
 
 <script>
-</script>
+/*
+	var container=$('div.road').css({position:'relative'});
+	var road=$('<div></div>').css({position:'position',width:'100%',height:40,display:'block',backgroundColor:'darkgrey'});
+	road.appendTo(container);
 
+	road.mousedown(function(e){
+		var add_bar=function(target,e){
+
+			if(e.currentTarget==e.target){
+				var offsetX=e.offsetX;	
+			}
+			else{
+				var offsetX=e.offsetX+e.target.offsetLeft;
+			}
+
+			var bar=$('<a style="width:4px;height:40px;display:block;position:absolute;background-color:lightblue;"></a>');
+			bar.css({left:offsetX});
+			bar.appendTo(target);
+		};
+
+		var add_body=function(target,md_e,mu_e){
+
+			if(mu_e.currentTarget==mu_e.Target){
+				var x=Math.min(md_e.offsetX,mu_e.offsetX);
+				var y=Math.max(md_e.offsetX,mu_e.offsetX);
+			}
+			else{
+				var x=Math.min(md_e.offsetX,mu_e.offsetX);
+				var y=Math.max(md_e.offsetX,mu_e.offsetX);
+			};
+
+			var body=$('<div></div>').css({
+				left:x+4,
+				width:y-x-4,
+				display:'block',
+				backgroundColor:'gold',
+				position:'absolute',
+				height:40
+			});
+
+			body.appendTo(target);
+		};
+
+		// define
+		var mh,tt;road.block=road.block || new Array;
+
+		add_bar(road,e);
+
+		console.log(e.target,e.currentTarget);
+
+		$(tt=e.target).mousemove(mh=function(e1){
+			// 建立區塊
+			var offset_X_Y=[e.offsetX-e1.offsetX,e.offsetY-e1.offsetY];
+		});
+
+		$(document).mouseup(function(e1){
+			$(tt).unbind('mousemove',mh);$(document).unbind('mouseup');
+			var offset_X_Y=[e.offsetX-e1.offsetX,e.offsetY-e1.offsetY];
+			// build end
+			add_bar(road,e1);
+			add_body(road,e,e1);
+		});
+	});
+*/
+</script>
 
 
 </body>
