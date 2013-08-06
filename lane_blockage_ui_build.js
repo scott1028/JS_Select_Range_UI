@@ -8,7 +8,7 @@
 //  laneblockage ui design
 
 // 多路段選取UI,需要輸入比例尺, function( 比例尺長度、依照比例尺計算後預設排除的路段 )
-$.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_handle,flag){
+$.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_handle,flag,location_label){
 
 	// 初始化標的
 	var target=$(this).css({
@@ -184,6 +184,9 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 	};
 
 	var main_ui=$('<div style="border-top:5px ridge darkgrey;border-bottom:5px ridge darkgrey;width: 100%;background-color: lightgrey;display:inline-block;margin-bottom:20px;height:40px;" onDragStart="return false" onSelectStart="return false"></div>');
+	main_ui.css({
+		background: 'lightgrey url(/Template/road_img.png) repeat-x'
+	});
 
 	// 選取
 	main_ui.mousedown(function(e){
@@ -222,20 +225,60 @@ $.prototype.build_lane_blockage_ui=function(km_length,user_block,block_click_han
 	var showInfo=$('<span>0km</span>').css({
 		position:'absolute',
 		fontWeight:'bold',
-		color:'red',
+		color:'white',
 		top:50,
 		minWidth:80,
-		display:'none'
+		borderRadius:15,
+		backgroundColor:'darkblue',
+		textAlign:'center',
+		zIndex:100,
+		display:'none',
+		opacity:0.8,
+		boxShadow: '2px 2px 1px #303030'
 	});
 
 	// 公里顯示
 	showInfo.appendTo(main_ui);
+
+	if(location_label){
+		var a=parseInt(target.css('width'));
+		var b=km_length;
+
+		for(var i in location_label){
+			var span=$('<span></span>').css({
+				position:'absolute',
+				left:location_label[i].km*a/b,
+				top:parseInt(target.css('height'))-25,
+				fontWeight:'bold',
+				color:location_label[i].color
+			});
+
+			span.attr({
+				onselectstart:'return false',
+				ondrop:'return false'
+			});
+
+			span.text(i);
+
+			span.appendTo(target);
+		}
+	};
 
 	return target
 };
 
 // init ui
 $(document).ready(function(){
+	var location_label={
+		南港系統:{km:0,color:'red'},
+		石碇:{km:4,color:'lightblue'},
+		坪林:{km:4+10.7,color:'yellow'},
+		頭城:{km:4+10.7+3+12.9+1,color:'green'},
+		宜蘭:{km:4+10.7+3+12.9+1+8.3,color:'lightgreen'},
+		羅東:{km:4+10.7+3+12.9+1+8.3+8.1,color:'gold'},
+		蘇澳:{km:4+10.7+3+12.9+1+8.3+8.1+7.6,color:'#f0b7a1'}
+	};
+
 	//a=$('.lane_blockage').build_lane_blockage_ui( 50 , [ [10,15] , [30,35] ] , function(e){console.log(this)} );		// 設定比例尺 50 KM
-	a=$('.lane_blockage').build_lane_blockage_ui( 50 , [] , function(e){console.log(this)} , true );					// 設定比例尺 50 KM
+	a=$('.lane_blockage').build_lane_blockage_ui( 50 , [] , function(e){console.log(this)} , true , location_label );					// 設定比例尺 50 KM
 });
